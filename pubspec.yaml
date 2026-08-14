@@ -1,0 +1,32 @@
+name: minha_biblioteca
+description: "Um aplicativo simples para salvar e compartilhar frases de livros."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Pacotes para salvar os dados offline no celular
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+
+  # Pacotes para converter o card em imagem e compartilhar no Instagram
+  widgets_to_image: ^0.0.2
+  share_plus: ^10.1.4
+  path_provider: ^2.1.5
+
+  # Ícones adicionais
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
