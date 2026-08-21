@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'home_screen.dart';
+import 'screens/home_screen.dart';
 
 void main() async {
   // Inicialização necessária para o banco de dados local Hive
