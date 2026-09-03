@@ -38,7 +38,9 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       builder: (context) {
         return QuoteFormModal(
-          quoteToEdit: quoteToEdit,
+          initialQuote: quoteToEdit?.quote,
+          initialAuthor: quoteToEdit?.author,
+          initialBook: quoteToEdit?.book,
           onSave: (quoteText, author, book) async {
             if (quoteToEdit != null && quoteKey != null) {
               final updated = Quote(
@@ -226,10 +228,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     }
                   }
 
-                  // Ordena por data (mais recentes primeiro)
                   allQuotes.sort((a, b) => b.value.createdAt.compareTo(a.value.createdAt));
 
-                  // Aplica o filtro de busca
                   final filtered = allQuotes.where((entry) {
                     final q = entry.value;
                     return q.quote.toLowerCase().contains(_searchQuery) ||

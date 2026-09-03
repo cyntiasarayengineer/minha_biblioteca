@@ -17,57 +17,62 @@ class QuoteCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              '"${quote.quote}"',
-              style: const TextStyle(
-                fontSize: 15,
-                fontStyle: FontStyle.italic,
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      clipBehavior: Clip.antiAlias,
+      child: Card(
+        margin: const EdgeInsets.only(bottom: 12),
+        elevation: 2,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '"${quote.quote}"',
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontStyle: FontStyle.italic,
+                ),
               ),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    '${quote.author} — ${quote.book}',
-                    style: const TextStyle(
-                      color: Colors.grey,
-                      fontSize: 13,
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      '${quote.author} — ${quote.book}',
+                      style: const TextStyle(
+                        color: Colors.grey,
+                        fontSize: 13,
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.edit, size: 20, color: Colors.blue),
-                      onPressed: onEdit,
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.delete, size: 20, color: Colors.red),
-                      onPressed: onDelete,
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.share, size: 20, color: Colors.deepPurple),
-                      onPressed: onShare,
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ],
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.edit, size: 20, color: Colors.blue),
+                        onPressed: onEdit,
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.delete, size: 20, color: Colors.red),
+                        onPressed: onDelete,
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.share, size: 20, color: Colors.deepPurple),
+                        onPressed: onShare,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
