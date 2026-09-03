@@ -3,31 +3,35 @@ class Quote {
   final String quote;
   final String author;
   final String book;
+  final DateTime createdAt;
 
   Quote({
     required this.id,
     required this.quote,
     required this.author,
     required this.book,
-  });
+    DateTime? createdAt,
+  }) : createdAt = createdAt ?? DateTime.now();
 
-  // Converte a frase para salvar no banco de dados local
-  Map<String, String> toMap() {
+  Map<String, dynamic> toMap() {
     return {
       'id': id,
       'quote': quote,
       'author': author,
       'book': book,
+      'createdAt': createdAt.toIso8601String(),
     };
   }
 
-  // Recupera a frase do banco de dados local
   factory Quote.fromMap(Map<dynamic, dynamic> map) {
     return Quote(
-      id: map['id'] ?? '',
+      id: map['id'] ?? DateTime.now().millisecondsSinceEpoch.toString(),
       quote: map['quote'] ?? '',
-      author: map['author'] ?? '',
-      book: map['book'] ?? '',
+      author: map['author'] ?? 'Autor Desconhecido',
+      book: map['book'] ?? 'Sem título',
+      createdAt: map['createdAt'] != null
+          ? DateTime.tryParse(map['createdAt'].toString()) ?? DateTime.now()
+          : DateTime.now(), // Se for uma frase antiga sem data, atribui a data atual!
     );
   }
 }

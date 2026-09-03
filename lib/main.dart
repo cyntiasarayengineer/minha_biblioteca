@@ -3,21 +3,20 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'screens/home_screen.dart';
 
 void main() async {
-  // Inicialização necessária para o banco de dados local Hive
   WidgetsFlutterBinding.ensureInitialized();
   await Hive.initFlutter();
   await Hive.openBox('quotes_box');
 
-  runApp(const MeuAppLivros());
+  runApp(const MyApp());
 }
 
-class MeuAppLivros extends StatelessWidget {
-  const MeuAppLivros({super.key});
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Minhas Citações',
+      title: 'Minha Biblioteca',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),

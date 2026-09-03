@@ -4,7 +4,11 @@ import 'package:widgets_to_image/widgets_to_image.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
+
 import '../models/quote_model.dart';
+import '../services/quote_storage_service.dart';
+import '../widgets/quote_card.dart';
+import '../widgets/quote_form_modal.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -16,6 +20,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final _searchController = TextEditingController();
   final WidgetsToImageController _imageController = WidgetsToImageController();
+  final QuoteStorageService _storageService = QuoteStorageService();
   String _searchQuery = '';
 
   @override
@@ -24,14 +29,7 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
-  // Janela para Criar ou Editar uma Citação
-  void _showQuoteFormModal(BuildContext context, {Quote? quoteToEdit, dynamic quoteKey}) {
-    final quoteController = TextEditingController(text: quoteToEdit?.quote ?? '');
-    final authorController = TextEditingController(text: quoteToEdit?.author ?? '');
-    final bookController = TextEditingController(text: quoteToEdit?.book ?? '');
-
-    final isEditing = quoteToEdit != null;
-
+  void _openFormModal({Quote? quoteToEdit, dynamic quoteKey}) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -39,99 +37,34 @@ class _HomeScreenState extends State<HomeScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) {
-        return Padding(
-          padding: EdgeInsets.only(
-            left: 20,
-            right: 20,
-            top: 20,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                isEditing ? 'Editar Citação' : 'Nova Citação',
-                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: quoteController,
-                maxLines: 3,
-                decoration: const InputDecoration(
-                  labelText: 'Frase / Citação',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: authorController,
-                decoration: const InputDecoration(
-                  labelText: 'Autor',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: bookController,
-                decoration: const InputDecoration(
-                  labelText: 'Livro (opcional)',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  backgroundColor: Colors.deepPurple,
-                  foregroundColor: Colors.white,
-                ),
-                onPressed: () async {
-                  if (quoteController.text.trim().isEmpty) return;
-
-                  final box = Hive.box('quotes_box');
-
-                  if (isEditing && quoteKey != null) {
-                    // Atualiza a citação existente
-                    final updatedQuote = Quote(
-                      id: quoteToEdit.id,
-                      quote: quoteController.text.trim(),
-                      author: authorController.text.trim().isEmpty
-                          ? 'Autor Desconhecido'
-                          : authorController.text.trim(),
-                      book: bookController.text.trim().isEmpty
-                          ? 'Sem título'
-                          : bookController.text.trim(),
-                    );
-                    await box.put(quoteKey, updatedQuote.toMap());
-                  } else {
-                    // Cria uma nova citação
-                    final newQuote = Quote(
-                      id: DateTime.now().millisecondsSinceEpoch.toString(),
-                      quote: quoteController.text.trim(),
-                      author: authorController.text.trim().isEmpty
-                          ? 'Autor Desconhecido'
-                          : authorController.text.trim(),
-                      book: bookController.text.trim().isEmpty
-                          ? 'Sem título'
-                          : bookController.text.trim(),
-                    );
-                    await box.add(newQuote.toMap());
-                  }
-
-                  if (context.mounted) Navigator.pop(context);
-                },
-                child: Text(isEditing ? 'Salvar Alterações' : 'Salvar Citação'),
-              ),
-            ],
-          ),
+        return QuoteFormModal(
+          quoteToEdit: quoteToEdit,
+          onSave: (quoteText, author, book) async {
+            if (quoteToEdit != null && quoteKey != null) {
+              final updated = Quote(
+                id: quoteToEdit.id,
+                quote: quoteText,
+                author: author,
+                book: book,
+                createdAt: quoteToEdit.createdAt,
+              );
+              await _storageService.updateQuote(quoteKey, updated);
+            } else {
+              final newQuote = Quote(
+                id: DateTime.now().millisecondsSinceEpoch.toString(),
+                quote: quoteText,
+                author: author,
+                book: book,
+              );
+              await _storageService.addQuote(newQuote);
+            }
+          },
         );
       },
     );
   }
 
-  // Diálogo para Confirmar Exclusão
-  void _confirmDelete(BuildContext context, dynamic key) {
+  void _confirmDelete(dynamic key) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -145,8 +78,7 @@ class _HomeScreenState extends State<HomeScreen> {
           TextButton(
             style: TextButton.styleFrom(foregroundColor: Colors.red),
             onPressed: () async {
-              final box = Hive.box('quotes_box');
-              await box.delete(key);
+              await _storageService.deleteQuote(key);
               if (context.mounted) Navigator.pop(context);
             },
             child: const Text('Excluir'),
@@ -156,8 +88,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Modal para Pré-visualização do Card do Instagram
-  void _showSharePreview(BuildContext context, Quote quote) {
+  void _showSharePreview(Quote quote) {
     showDialog(
       context: context,
       builder: (context) {
@@ -179,11 +110,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(
-                          Icons.format_quote,
-                          color: Colors.amber,
-                          size: 40,
-                        ),
+                        const Icon(Icons.format_quote, color: Colors.amber, size: 40),
                         const SizedBox(height: 12),
                         Text(
                           '"${quote.quote}"',
@@ -206,10 +133,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         if (quote.book.isNotEmpty && quote.book != 'Sem título')
                           Text(
                             quote.book,
-                            style: const TextStyle(
-                              color: Colors.grey,
-                              fontSize: 12,
-                            ),
+                            style: const TextStyle(color: Colors.grey, fontSize: 12),
                           ),
                       ],
                     ),
@@ -269,124 +193,67 @@ class _HomeScreenState extends State<HomeScreen> {
                 decoration: InputDecoration(
                   hintText: 'Buscar por frase, autor ou livro...',
                   prefixIcon: const Icon(Icons.search),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   suffixIcon: _searchQuery.isNotEmpty
                       ? IconButton(
                           icon: const Icon(Icons.clear),
                           onPressed: () {
                             _searchController.clear();
-                            setState(() {
-                              _searchQuery = '';
-                            });
+                            setState(() => _searchQuery = '');
                           },
                         )
                       : null,
                 ),
                 onChanged: (value) {
-                  setState(() {
-                    _searchQuery = value.toLowerCase();
-                  });
+                  setState(() => _searchQuery = value.toLowerCase());
                 },
               ),
             ),
             Expanded(
               child: ValueListenableBuilder(
-                valueListenable: Hive.box('quotes_box').listenable(),
+                valueListenable: Hive.box(QuoteStorageService.boxName).listenable(),
                 builder: (context, Box box, _) {
                   if (box.isEmpty) {
-                    return const Center(
-                      child: Text('Nenhuma citação cadastrada ainda.'),
-                    );
+                    return const Center(child: Text('Nenhuma citação cadastrada ainda.'));
                   }
 
-                  final keys = box.keys.toList();
-                  final filteredKeys = keys.where((key) {
+                  final allQuotes = <MapEntry<dynamic, Quote>>[];
+                  for (var key in box.keys) {
                     final item = box.get(key);
-                    final quote = Quote.fromMap(Map<String, dynamic>.from(item));
-                    return quote.quote.toLowerCase().contains(_searchQuery) ||
-                        quote.author.toLowerCase().contains(_searchQuery) ||
-                        quote.book.toLowerCase().contains(_searchQuery);
+                    if (item != null) {
+                      final quote = Quote.fromMap(Map<String, dynamic>.from(item));
+                      allQuotes.add(MapEntry(key, quote));
+                    }
+                  }
+
+                  // Ordena por data (mais recentes primeiro)
+                  allQuotes.sort((a, b) => b.value.createdAt.compareTo(a.value.createdAt));
+
+                  // Aplica o filtro de busca
+                  final filtered = allQuotes.where((entry) {
+                    final q = entry.value;
+                    return q.quote.toLowerCase().contains(_searchQuery) ||
+                        q.author.toLowerCase().contains(_searchQuery) ||
+                        q.book.toLowerCase().contains(_searchQuery);
                   }).toList();
 
-                  if (filteredKeys.isEmpty) {
-                    return const Center(
-                      child: Text('Nenhuma citação encontrada.'),
-                    );
+                  if (filtered.isEmpty) {
+                    return const Center(child: Text('Nenhuma citação encontrada.'));
                   }
 
                   return ListView.builder(
                     padding: const EdgeInsets.only(left: 16, right: 16, top: 8, bottom: 90),
-                    itemCount: filteredKeys.length,
+                    itemCount: filtered.length,
                     itemBuilder: (context, index) {
-                      final key = filteredKeys[index];
-                      final item = box.get(key);
-                      final quote = Quote.fromMap(Map<String, dynamic>.from(item));
+                      final entry = filtered[index];
+                      final key = entry.key;
+                      final quote = entry.value;
 
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(12.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                '"${quote.quote}"',
-                                style: const TextStyle(
-                                  fontSize: 15,
-                                  fontStyle: FontStyle.italic,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      '${quote.author} — ${quote.book}',
-                                      style: const TextStyle(
-                                        color: Colors.grey,
-                                        fontSize: 13,
-                                      ),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                  Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      IconButton(
-                                        icon: const Icon(Icons.edit, size: 20, color: Colors.blue),
-                                        onPressed: () {
-                                          _showQuoteFormModal(
-                                            context,
-                                            quoteToEdit: quote,
-                                            quoteKey: key,
-                                          );
-                                        },
-                                      ),
-                                      IconButton(
-                                        icon: const Icon(Icons.delete, size: 20, color: Colors.red),
-                                        onPressed: () {
-                                          _confirmDelete(context, key);
-                                        },
-                                      ),
-                                      IconButton(
-                                        icon: const Icon(Icons.share, size: 20, color: Colors.deepPurple),
-                                        onPressed: () {
-                                          _showSharePreview(context, quote);
-                                        },
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
+                      return QuoteCard(
+                        quote: quote,
+                        onEdit: () => _openFormModal(quoteToEdit: quote, quoteKey: key),
+                        onDelete: () => _confirmDelete(key),
+                        onShare: () => _showSharePreview(quote),
                       );
                     },
                   );
@@ -399,7 +266,7 @@ class _HomeScreenState extends State<HomeScreen> {
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.deepPurple,
         foregroundColor: Colors.white,
-        onPressed: () => _showQuoteFormModal(context),
+        onPressed: () => _openFormModal(),
         child: const Icon(Icons.add),
       ),
     );
