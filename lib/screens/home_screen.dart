@@ -41,13 +41,17 @@ class _HomeScreenState extends State<HomeScreen> {
           initialQuote: quoteToEdit?.quote,
           initialAuthor: quoteToEdit?.author,
           initialBook: quoteToEdit?.book,
-          onSave: (quoteText, author, book) async {
+          initialPage: quoteToEdit?.page,
+          initialTag: quoteToEdit?.tag,
+          onSave: (quoteText, author, book, page, tag) async {
             if (quoteToEdit != null && quoteKey != null) {
               final updated = Quote(
                 id: quoteToEdit.id,
                 quote: quoteText,
                 author: author,
                 book: book,
+                page: page,
+                tag: tag,
                 createdAt: quoteToEdit.createdAt,
               );
               await _storageService.updateQuote(quoteKey, updated);
@@ -57,6 +61,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 quote: quoteText,
                 author: author,
                 book: book,
+                page: page,
+                tag: tag,
               );
               await _storageService.addQuote(newQuote);
             }

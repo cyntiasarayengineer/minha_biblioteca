@@ -3,6 +3,8 @@ class Quote {
   final String quote;
   final String author;
   final String book;
+  final String? page;
+  final String? tag;
   final DateTime createdAt;
 
   Quote({
@@ -10,6 +12,8 @@ class Quote {
     required this.quote,
     required this.author,
     required this.book,
+    this.page,
+    this.tag,
     DateTime? createdAt,
   }) : createdAt = createdAt ?? DateTime.now();
 
@@ -19,19 +23,23 @@ class Quote {
       'quote': quote,
       'author': author,
       'book': book,
+      'page': page,
+      'tag': tag,
       'createdAt': createdAt.toIso8601String(),
     };
   }
 
-  factory Quote.fromMap(Map<dynamic, dynamic> map) {
+  factory Quote.fromMap(Map<String, dynamic> map) {
     return Quote(
-      id: map['id'] ?? DateTime.now().millisecondsSinceEpoch.toString(),
+      id: map['id'] ?? '',
       quote: map['quote'] ?? '',
-      author: map['author'] ?? 'Autor Desconhecido',
-      book: map['book'] ?? 'Sem título',
+      author: map['author'] ?? '',
+      book: map['book'] ?? '',
+      page: map['page'],
+      tag: map['tag'],
       createdAt: map['createdAt'] != null
-          ? DateTime.tryParse(map['createdAt'].toString()) ?? DateTime.now()
-          : DateTime.now(), // Se for uma frase antiga sem data, atribui a data atual!
+          ? DateTime.parse(map['createdAt'])
+          : DateTime.now(),
     );
   }
 }
